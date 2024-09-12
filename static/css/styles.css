@@ -1,0 +1,17 @@
+/* Additional custom styles */
+body {
+    font-family: 'Arial', sans-serif;
+}
+
+.container {
+    max-width: 1200px;
+}
+
+#previewContainer img {
+    max-height: 300px;
+    object-fit: contain;
+}
+
+#resultContent {
+    white-space: pre-wrap;
+}
