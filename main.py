@@ -19,8 +19,10 @@ def analyze():
 
     try:
         result = analyze_plant_image(image)
+        print("Structured result:", result)  # Add this line for debugging
         return jsonify(result)
     except Exception as e:
+        print("Error:", str(e))  # Add this line for debugging
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

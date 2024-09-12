@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(response => response.json())
         .then(data => {
-            resultContent.textContent = data;
+            displayResult(data);
             resultContainer.classList.remove('hidden');
         })
         .catch(error => {
@@ -70,4 +70,30 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('An error occurred during analysis. Please try again.');
         });
     });
+
+    function displayResult(data) {
+        console.log("Received data:", data);  // Add this line for debugging
+
+        const sections = [
+            { title: "Plant Name", key: "name" },
+            { title: "Suitable Locations", key: "locations" },
+            { title: "Benefits", key: "benefits" },
+            { title: "Care Tips", key: "care_tips" }
+        ];
+
+        let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+
+        sections.forEach(section => {
+            const content = data[section.key] || "Information not available";
+            html += `
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h4 class="font-semibold text-lg text-green-700 mb-2">${section.title}</h4>
+                    <p class="text-gray-700">${content}</p>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        resultContent.innerHTML = html;
+    }
 });
