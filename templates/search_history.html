@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search History - Plant Tracker App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="bg-green-50 min-h-screen flex flex-col">
+    <header class="bg-green-600 text-white p-4">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Plant Tracker Logo" class="h-8 mr-2">
+                <h1 class="text-2xl font-bold">Plant Tracker</h1>
+            </div>
+            <nav>
+                <a href="{{ url_for('index') }}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded mr-2">Home</a>
+                <a href="{{ url_for('logout') }}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto flex-grow p-4">
+        <h2 class="text-2xl font-semibold mb-4">Your Search History</h2>
+        {% if searches %}
+            <ul class="bg-white shadow-md rounded-lg divide-y divide-gray-200">
+                {% for search in searches %}
+                    <li class="p-4 hover:bg-gray-50">
+                        <a href="{{ url_for('search_detail', search_id=search.id) }}" class="block">
+                            <p class="font-semibold text-lg text-green-700">{{ search.plant_name }}</p>
+                            <p class="text-sm text-gray-600">Searched on: {{ search.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-gray-600">You haven't searched for any plants yet.</p>
+        {% endif %}
+    </main>
+
+    <footer class="bg-green-600 text-white p-4 mt-8">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2023 Plant Tracker App. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

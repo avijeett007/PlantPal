@@ -1,9 +1,11 @@
 import os
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+import base64
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, abort
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from urllib.parse import urlparse
 from utils.openai_vision import analyze_plant_image
-from models import db, User
+from models import db, User, SearchHistory
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
@@ -27,6 +29,9 @@ def index():
 @app.route('/analyze', methods=['POST'])
 @login_required
 def analyze():
+    if current_user.credits <= 0:
+        return jsonify({'error': 'No credits available. Please subscribe to continue using the service.'}), 403
+
     if 'image' not in request.files:
         return jsonify({'error': 'No image file provided'}), 400
 
@@ -36,10 +41,22 @@ def analyze():
 
     try:
         result = analyze_plant_image(image)
-        print("Structured result:", result)  # Add this line for debugging
+        current_user.credits -= 1
+        image_data = base64.b64encode(image.read()).decode('utf-8')
+        search_history = SearchHistory(
+            user_id=current_user.id,
+            plant_name=result['name'],
+            image_data=image_data,
+            locations=result['locations'],
+            benefits=result['benefits'],
+            care_tips=result['care_tips']
+        )
+        db.session.add(search_history)
+        db.session.commit()
+        print("Structured result:", result)
         return jsonify(result)
     except Exception as e:
-        print("Error:", str(e))  # Add this line for debugging
+        print("Error:", str(e))
         return jsonify({'error': str(e)}), 500
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -87,9 +104,27 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+@app.route('/search_history')
+@login_required
+def search_history():
+    searches = SearchHistory.query.filter_by(user_id=current_user.id).order_by(SearchHistory.timestamp.desc()).all()
+    return render_template('search_history.html', searches=searches)
+
+@app.route('/get_credits')
+@login_required
+def get_credits():
+    return jsonify({'credits': current_user.credits})
+
+@app.route('/search_detail/<int:search_id>')
+@login_required
+def search_detail(search_id):
+    search = SearchHistory.query.get_or_404(search_id)
+    if search.user_id != current_user.id:
+        abort(403)
+    return render_template('search_detail.html', search=search)
+
 with app.app_context():
-    db.drop_all()  # This will drop all existing tables
-    db.create_all()  # This will create new tables with updated schema
+    db.create_all()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

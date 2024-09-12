@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const analyzeBtn = document.getElementById('analyzeBtn');
     const resultContainer = document.getElementById('resultContainer');
     const resultContent = document.getElementById('resultContent');
+    const creditsDisplay = document.getElementById('creditsDisplay');
+    const subscribeBtn = document.getElementById('subscribeBtn');
 
     let imageFile = null;
 
@@ -60,19 +62,30 @@ document.addEventListener('DOMContentLoaded', () => {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             displayResult(data);
             resultContainer.classList.remove('hidden');
+            updateCreditsDisplay();
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred during analysis. Please try again.');
+            if (error.message === 'Network response was not ok') {
+                alert('No credits available. Please subscribe to continue using the service.');
+                disableAnalyzeButton();
+            } else {
+                alert('An error occurred during analysis. Please try again.');
+            }
         });
     });
 
     function displayResult(data) {
-        console.log("Received data:", data);  // Add this line for debugging
+        console.log("Received data:", data);
 
         const sections = [
             { title: "Plant Name", key: "name" },
@@ -96,4 +109,27 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '</div>';
         resultContent.innerHTML = html;
     }
+
+    function updateCreditsDisplay() {
+        fetch('/get_credits')
+            .then(response => response.json())
+            .then(data => {
+                creditsDisplay.textContent = `Credits: ${data.credits}`;
+                if (data.credits <= 0) {
+                    disableAnalyzeButton();
+                }
+            })
+            .catch(error => console.error('Error fetching credits:', error));
+    }
+
+    function disableAnalyzeButton() {
+        analyzeBtn.disabled = true;
+        analyzeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    subscribeBtn.addEventListener('click', () => {
+        alert('Subscription feature coming soon!');
+    });
+
+    updateCreditsDisplay();
 });
